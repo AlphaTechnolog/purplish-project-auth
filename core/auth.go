@@ -43,13 +43,13 @@ func decryptUser(tokenString string) (*database.User, error) {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		return &database.User{
-			ID: claims["user_id"].(string),
-			Name: claims["name"].(string),
-			Surname: claims["surname"].(string),
-			Email: claims["email"].(string),
+			ID:          claims["user_id"].(string),
+			Name:        claims["name"].(string),
+			Surname:     claims["surname"].(string),
+			Email:       claims["email"].(string),
 			LocalScopes: claims["local_scopes"].(string),
-			CompanyID: claims["company_id"].(string),
-			Password: "",
+			CompanyID:   claims["company_id"].(string),
+			Password:    "",
 		}, nil
 	}
 
