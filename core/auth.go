@@ -23,16 +23,6 @@ type UserLoginPayload struct {
 	Password string `json:"password"`
 }
 
-func getAuthorization(authorizationString string) (string, error) {
-	parts := strings.Split(authorizationString, " ")
-	if len(parts) <= 1 {
-		return "", fmt.Errorf("Malformed authorization string")
-	}
-
-	// return the part after the bearer prefix.
-	return parts[1], nil
-}
-
 func decryptUser(tokenString string) (*database.User, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(TOKEN_SECRET), nil
@@ -62,7 +52,15 @@ func getUserScopes(d *sql.DB, c *gin.Context) error {
 		return errors.New("Invalid authorization string")
 	}
 
-	tokenString, err := getAuthorization(authorization)
+	tokenString, err := func() (string, error) {
+		parts := strings.Split(authorization, " ")
+		if len(parts) <= 1 {
+			return "", errors.New("Malformed authorization string")
+		}
+
+		return parts[1], nil
+	}()
+
 	if err != nil {
 		return err
 	}
@@ -72,9 +70,15 @@ func getUserScopes(d *sql.DB, c *gin.Context) error {
 		return err
 	}
 
-	fmt.Println(user.CompanyID, user.LocalScopes)
+	scopes, err := user.ResolveScopes()
+	if err != nil {
+		return fmt.Errorf("Unable to resolve user scopes: %w", err)
+	}
 
-	c.JSON(http.StatusOK, gin.H{"user": user})
+	c.JSON(http.StatusOK, gin.H{
+		"user": user,
+		"scopes": scopes,
+	})
 
 	return nil
 }

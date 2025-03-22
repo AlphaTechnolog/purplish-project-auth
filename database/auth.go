@@ -2,13 +2,19 @@ package database
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 )
 
+// TODO: Extract these to envvars.
 // this will be the value for company_id when the user registers without a company
 const GUEST_STRING = "<GUEST>"
+const MEMBERSHIP_MICRO_BASE = "http://localhost:8006/memberships"
 
 type User struct {
 	ID          string `json:"id"`
@@ -20,8 +26,70 @@ type User struct {
 	Password    string `json:"-"`
 }
 
+type CompanyMembership struct {
+	CompanyID    string `json:"company_id"`
+	MembershipID string `json:"membership_id"`
+	Name         string `json:"name"`
+	Description  string `json:"description,omitempty"`
+	Scopes       string `json:"scopes"`
+}
+
 func (u *User) IsGuest() bool {
 	return u.CompanyID == GUEST_STRING
+}
+
+func (u *User) ResolveScopes() (string, error) {
+	resp, err := http.Get(fmt.Sprintf(
+		"%s/company-membership/%s",
+		MEMBERSHIP_MICRO_BASE,
+		u.CompanyID,
+	))
+
+	if err != nil {
+		return "", fmt.Errorf("Unable to tryna obtain company membership: %w", err)
+	}
+
+	defer resp.Body.Close()
+
+	responseBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("Cannot read company membership stream: %w", err)
+	}
+
+	type companyMembershipResponse struct {
+		companyMembership CompanyMembership `json:"company_membership"`
+	}
+
+	var companyMembershipRes companyMembershipResponse
+	if err := json.Unmarshal(responseBytes, &companyMembershipRes); err != nil {
+		return "", fmt.Errorf("Unable to decode company membership data: %w", err)
+	}
+
+	marshalized, _ := json.Marshal(companyMembershipRes)
+	fmt.Println("responseString:\n", string(responseBytes))
+	fmt.Println("marshalized response:\n", string(marshalized))
+	fmt.Println("parsed response:\n", companyMembershipRes)
+
+	companyMembership := companyMembershipRes.companyMembership
+	scopesArray := strings.Split(companyMembership.Scopes+" "+u.LocalScopes, " ")
+	uniqueScopes := make(map[string]struct{})
+	for _, scope := range scopesArray {
+		if scope != "" {
+			uniqueScopes[scope] = struct{}{}
+		}
+	}
+
+	var scopes string = ""
+	for scope := range uniqueScopes {
+		if scopes == "" {
+			scopes = scope
+			continue
+		}
+
+		scopes += " " + scope
+	}
+
+	return scopes, nil
 }
 
 type CreateUserPayload struct {
@@ -40,9 +108,9 @@ func GetUsers(d *sql.DB) ([]User, error) {
 	var users []User
 
 	sql := `
-        SELECT u.id, u.name, u.surname, u.email, u.local_scopes, u.company_id, u.password
-        FROM users u;
-    `
+		SELECT u.id, u.name, u.surname, u.email, u.local_scopes, u.company_id, u.password
+		FROM users u;
+	`
 
 	rows, err := d.Query(sql)
 	if err != nil {
@@ -81,10 +149,10 @@ func GetUserByID(d *sql.DB, ID string) (User, error) {
 	var user User
 
 	sql := `
-        SELECT u.id, u.name, u.surname, u.email, u.local_scopes, u.company_id, u.password
-        FROM users u
-        WHERE u.id = ?;
-    `
+		SELECT u.id, u.name, u.surname, u.email, u.local_scopes, u.company_id, u.password
+		FROM users u
+		WHERE u.id = ?;
+	`
 
 	row := d.QueryRow(sql, ID)
 	err := row.Scan(
@@ -108,10 +176,10 @@ func GetUserByEmail(d *sql.DB, email string) (User, error) {
 	var user User
 
 	sql := `
-        SELECT u.id, u.name, u.surname, u.email, u.local_scopes, u.company_id, u.password
-        FROM users u
-        WHERE u.email = ?;
-    `
+		SELECT u.id, u.name, u.surname, u.email, u.local_scopes, u.company_id, u.password
+		FROM users u
+		WHERE u.email = ?;
+	`
 
 	row := d.QueryRow(sql, email)
 	err := row.Scan(
@@ -133,10 +201,10 @@ func GetUserByEmail(d *sql.DB, email string) (User, error) {
 
 func CreateUser(d *sql.DB, createPayload CreateUserPayload) error {
 	sql := `
-        INSERT INTO users (id, name, surname, email, password, local_scopes, company_id)
-        VALUES
-            (?, ?, ?, ?, ?, ?, ?);
-    `
+		INSERT INTO users (id, name, surname, email, password, local_scopes, company_id)
+		VALUES
+			(?, ?, ?, ?, ?, ?, ?);
+	`
 
 	localScopes := ""
 
