@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    surname VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    local_scopes VARCHAR(255) NOT NULL,
+    company_id VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
