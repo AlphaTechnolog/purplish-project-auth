@@ -42,82 +42,9 @@ func (u *User) ResolveScopes() (string, error) {
 		return "", err
 	}
 
-	scopes := lib.ExpandScopes(companyMembership.Scopes + " " + u.LocalScopes)
+	mixedScopes := companyMembership.Scopes + " " + u.LocalScopes
 
-	return scopes, nil
-
-	// companyScopes := lib.ExpandScopes(companyMembership.Scopes)
-	// userScopes := lib.ExpandScopes(u.LocalScopes)
-	// scopesArray := strings.Split(companyScopes+" "+userScopes, " ")
-	// uniqueScopes := make(map[string]struct{})
-	// for _, scope := range scopesArray {
-	// 	if scope != "" {
-	// 		uniqueScopes[scope] = struct{}{}
-	// 	}
-	// }
-
-	// var scopes string = ""
-	// for scope := range uniqueScopes {
-	// 	if scopes == "" {
-	// 		scopes = scope
-	// 	} else {
-	// 		scopes += " " + scope
-	// 	}
-	// }
-
-	// return scopes, nil
-
-	// resp, err := http.Get(fmt.Sprintf(
-	// 	"%s/company-membership/%s",
-	// 	MEMBERSHIP_MICRO_BASE,
-	// 	u.CompanyID,
-	// ))
-
-	// if err != nil {
-	// 	return "", fmt.Errorf("Unable to tryna obtain company membership: %w", err)
-	// }
-
-	// defer resp.Body.Close()
-
-	// responseBytes, err := io.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return "", fmt.Errorf("Cannot read company membership stream: %w", err)
-	// }
-
-	// type companyMembershipResponse struct {
-	// 	companyMembership CompanyMembership `json:"company_membership"`
-	// }
-
-	// var companyMembershipRes companyMembershipResponse
-	// if err := json.Unmarshal(responseBytes, &companyMembershipRes); err != nil {
-	// 	return "", fmt.Errorf("Unable to decode company membership data: %w", err)
-	// }
-
-	// marshalized, _ := json.Marshal(companyMembershipRes)
-	// fmt.Println("responseString:\n", string(responseBytes))
-	// fmt.Println("marshalized response:\n", string(marshalized))
-	// fmt.Println("parsed response:\n", companyMembershipRes)
-
-	// companyMembership := companyMembershipRes.companyMembership
-	// scopesArray := strings.Split(companyMembership.Scopes+" "+u.LocalScopes, " ")
-	// uniqueScopes := make(map[string]struct{})
-	// for _, scope := range scopesArray {
-	// 	if scope != "" {
-	// 		uniqueScopes[scope] = struct{}{}
-	// 	}
-	// }
-
-	// var scopes string = ""
-	// for scope := range uniqueScopes {
-	// 	if scopes == "" {
-	// 		scopes = scope
-	// 		continue
-	// 	}
-
-	// 	scopes += " " + scope
-	// }
-
-	// return scopes, nil
+	return lib.ExpandScopes(mixedScopes), nil
 }
 
 type CreateUserPayload struct {
