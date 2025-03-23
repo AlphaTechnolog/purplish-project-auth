@@ -19,8 +19,8 @@ func everyScope() string {
 	return strings.Join(scopes, " ")
 }
 
-// / This function will expand scopes wildcards. Example:
-// / ExpandScopes("*:companies *:kardex") -> "c:companies r:companies u:companies d:companies c:kardex r:kardex u:kardex d:kardex"
+// This function will expand scopes wildcards. Example:
+// ExpandScopes("*:companies *:kardex") -> "c:companies r:companies u:companies d:companies c:kardex r:kardex u:kardex d:kardex"
 func ExpandScopes(scopes string) string {
 	values := strings.Split(scopes, " ")
 	uniqueScopes := make(map[string]struct{})
