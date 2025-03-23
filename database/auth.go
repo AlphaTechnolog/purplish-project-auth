@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	// "strings"
 
 	"github.com/alphatechnolog/purplish-auth/api"
 	"github.com/alphatechnolog/purplish-auth/lib"
