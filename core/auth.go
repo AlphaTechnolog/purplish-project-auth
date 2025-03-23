@@ -76,7 +76,7 @@ func getUserScopes(d *sql.DB, c *gin.Context) error {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user": user,
+		"user":   user,
 		"scopes": scopes,
 	})
 
