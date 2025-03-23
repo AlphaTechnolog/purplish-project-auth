@@ -1,7 +1,7 @@
 package lib
 
 import (
-    "fmt"
+	"fmt"
 	"strings"
 )
 
@@ -31,8 +31,8 @@ func ExpandScopes(scopes string) string {
 		}
 		parts := strings.Split(scope, ":")
 		if len(parts) <= 1 {
-            fmt.Println("invalid scope (continued):", scope)
-            continue
+			fmt.Println("invalid scope (continued):", scope)
+			continue
 		}
 		operation := parts[0]
 		module := parts[1]
