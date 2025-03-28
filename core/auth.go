@@ -131,6 +131,6 @@ func loginUser(d *sql.DB, c *gin.Context) error {
 }
 
 func CreateAuthRoutes(d *sql.DB, r *gin.RouterGroup) {
-	r.GET("/user-scopes", WrapError(WithDB(d, getUserScopes)))
-	r.POST("/login", WrapError(WithDB(d, loginUser)))
+	r.GET("/user-scopes/", WrapError(WithDB(d, getUserScopes)))
+	r.POST("/login/", WrapError(WithDB(d, loginUser)))
 }
