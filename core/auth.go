@@ -17,8 +17,16 @@ import (
 
 // TODO: This should be set using some envvar method.
 const TOKEN_SECRET = "secret"
+const BCRYPT_COST = 14
 
 type UserLoginPayload struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type CreateUserLoginPayload struct {
+	Name     string `json:"name"`
+	Surname  string `json:"surname"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -130,7 +138,45 @@ func loginUser(d *sql.DB, c *gin.Context) error {
 	return nil
 }
 
+func createUser(d *sql.DB, c *gin.Context) error {
+	bodyContents, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		return err
+	}
+	defer c.Request.Body.Close()
+
+	var createUserPayload CreateUserLoginPayload
+	if err = json.Unmarshal(bodyContents, &createUserPayload); err != nil {
+        return fmt.Errorf("Unexpected JSON input: %w", err)
+	}
+
+    if _, err := database.GetUserByEmail(d, createUserPayload.Email); err == nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Email is already used"})
+        return nil
+    }
+
+    bytes, err := bcrypt.GenerateFromPassword([]byte(createUserPayload.Password), BCRYPT_COST)
+    encryptedPassword := string(bytes)
+
+    err = database.CreateUser(d, database.CreateUserPayload{
+        Name: createUserPayload.Name,
+        Surname: createUserPayload.Surname,
+        Email: createUserPayload.Email,
+        HashedPassword: encryptedPassword,
+        CompanyID: database.GUEST_STRING,
+    })
+
+    if err != nil {
+        return fmt.Errorf("Unable to create user: %w", err)
+    }
+
+    c.JSON(http.StatusCreated, gin.H{"ok": true})
+
+	return nil
+}
+
 func CreateAuthRoutes(d *sql.DB, r *gin.RouterGroup) {
 	r.GET("/user-scopes/", WrapError(WithDB(d, getUserScopes)))
 	r.POST("/login/", WrapError(WithDB(d, loginUser)))
+	r.POST("/register/", WrapError(WithDB(d, createUser)))
 }

@@ -37,6 +37,10 @@ func (u *User) IsGuest() bool {
 }
 
 func (u *User) ResolveScopes() (string, error) {
+	if u.IsGuest() {
+		return lib.ExpandScopes(u.LocalScopes), nil
+	}
+
 	companyMembership, err := api.GetCompanyMembership(u.CompanyID)
 	if err != nil {
 		return "", err
