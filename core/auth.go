@@ -147,30 +147,30 @@ func createUser(d *sql.DB, c *gin.Context) error {
 
 	var createUserPayload CreateUserLoginPayload
 	if err = json.Unmarshal(bodyContents, &createUserPayload); err != nil {
-        return fmt.Errorf("Unexpected JSON input: %w", err)
+		return fmt.Errorf("Unexpected JSON input: %w", err)
 	}
 
-    if _, err := database.GetUserByEmail(d, createUserPayload.Email); err == nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Email is already used"})
-        return nil
-    }
+	if _, err := database.GetUserByEmail(d, createUserPayload.Email); err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email is already used"})
+		return nil
+	}
 
-    bytes, err := bcrypt.GenerateFromPassword([]byte(createUserPayload.Password), BCRYPT_COST)
-    encryptedPassword := string(bytes)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(createUserPayload.Password), BCRYPT_COST)
+	encryptedPassword := string(bytes)
 
-    err = database.CreateUser(d, database.CreateUserPayload{
-        Name: createUserPayload.Name,
-        Surname: createUserPayload.Surname,
-        Email: createUserPayload.Email,
-        HashedPassword: encryptedPassword,
-        CompanyID: database.GUEST_STRING,
-    })
+	err = database.CreateUser(d, database.CreateUserPayload{
+		Name:           createUserPayload.Name,
+		Surname:        createUserPayload.Surname,
+		Email:          createUserPayload.Email,
+		HashedPassword: encryptedPassword,
+		CompanyID:      database.GUEST_STRING,
+	})
 
-    if err != nil {
-        return fmt.Errorf("Unable to create user: %w", err)
-    }
+	if err != nil {
+		return fmt.Errorf("Unable to create user: %w", err)
+	}
 
-    c.JSON(http.StatusCreated, gin.H{"ok": true})
+	c.JSON(http.StatusCreated, gin.H{"ok": true})
 
 	return nil
 }
