@@ -17,7 +17,7 @@ Make sure you have the next dependencies on the target system:
 
 Run the next commands on your system:
 
-```
+```sh
 ./.bin/run-migrations.sh
 go mod tidy
 PORT=8007 go run .
